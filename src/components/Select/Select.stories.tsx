@@ -27,4 +27,4 @@ export default {
     component: Select
 } as ComponentMeta<typeof Select>;
 
-export const Primary: ComponentStory<typeof Select> = () => <Select />;
+export const Primary: ComponentStory<typeof Select> = () => <ExempleSelect />;

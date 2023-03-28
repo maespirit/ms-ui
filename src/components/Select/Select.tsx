@@ -1,4 +1,4 @@
-import React, { ReactNode, createContext, useReducer } from 'react';
+import React, { ReactNode, createContext, useContext, useReducer } from 'react';
 
 interface IStateDefinition {
     dropdownState: boolean;
@@ -9,7 +9,7 @@ interface IStateDefinition {
 
 type Actions = { type: 'OPEN_LIST' } | { type: 'CLOSE_LIST' };
 
-const INITIAL_STATE: IStateDefinition = {
+const INITIAL_STATE_DATA: IStateDefinition = {
     dropdownState: false,
     searchQuery: '',
     options: [],
@@ -29,7 +29,17 @@ const selectActionsReducer = (state: IStateDefinition, action: Actions) => {
     }
 };
 
-const SelectContext = createContext(null);
+const SelectContextData = createContext(null);
+
+const useData = () => {
+    let context = useContext(SelectContextData);
+    if (context === null) {
+        let err = new Error(`le context data n'existe pas`);
+        if (Error.captureStackTrace) Error.captureStackTrace(err, useData);
+        throw err;
+    }
+    return context;
+};
 
 interface ISelect {
     children?: ReactNode;
@@ -44,18 +54,32 @@ interface ISelectOption {
 }
 
 const Select = ({ children }: ISelect) => {
-    const [state, dispatch] = useReducer(selectActionsReducer, INITIAL_STATE);
+    const [state, dispatch] = useReducer(
+        selectActionsReducer,
+        INITIAL_STATE_DATA
+    );
     return (
-        <SelectContext.Provider value={null}>{children}</SelectContext.Provider>
+        <SelectContextData.Provider value={null}>
+            <button>coucou</button>
+            <div>{children}</div>
+        </SelectContextData.Provider>
     );
 };
 
 const Options = ({ children }: ISelectOptions) => {
-    return <div>{children}</div>;
+    return (
+        <ul role='listbox' aria-orientation='vertical' tabIndex={0}>
+            {children}
+        </ul>
+    );
 };
 
 const Option = ({ children }: ISelectOption) => {
-    return <div>{children}</div>;
+    return (
+        <li tabIndex={-1} role='option' aria-selected={false}>
+            {children}
+        </li>
+    );
 };
 
 Select.Options = Options;
