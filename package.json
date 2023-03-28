@@ -1,0 +1,40 @@
+{
+    "name": "msui",
+    "version": "0.0.1",
+    "description": "library of ui components",
+    "main": "index.js",
+    "repository": "git@github.com:maespirit/ms-ui.git",
+    "author": "Nicolas Marcaud <nm@maespirit.fr>",
+    "license": "MIT",
+    "dependencies": {},
+    "devDependencies": {
+        "@babel/core": "^7.21.3",
+        "@storybook/addon-actions": "^6.5.16",
+        "@storybook/addon-essentials": "^6.5.16",
+        "@storybook/addon-interactions": "^6.5.16",
+        "@storybook/addon-links": "^6.5.16",
+        "@storybook/builder-webpack4": "^6.5.16",
+        "@storybook/manager-webpack4": "^6.5.16",
+        "@storybook/react": "^6.5.16",
+        "@storybook/testing-library": "^0.0.13",
+        "@types/react": "^18.0.28",
+        "@types/react-dom": "^18.0.11",
+        "babel-loader": "^8.3.0",
+        "prettier": "^2.8.7",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "rollup": "^3.20.2",
+        "typescript": "^5.0.2"
+    },
+    "peerDependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "scripts": {
+        "storybook": "start-storybook -p 6006",
+        "build-storybook": "build-storybook"
+    },
+    "resolutions": {
+        "@storybook/react-docgen-typescript-plugin": "1.0.6--canary.9.cd77847.0"
+    }
+}

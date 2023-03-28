@@ -1,0 +1,9 @@
+{
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "endOfLine": "lf",
+  "tabWidth": 4,
+  "braceStyle": "1tbs",
+  "trailingComma": "none",
+  "arrowParens": "avoid"
+}
