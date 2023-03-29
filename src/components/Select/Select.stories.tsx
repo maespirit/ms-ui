@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Select from './Select';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 
@@ -11,8 +11,10 @@ const people = [
 ];
 
 const ExempleSelect = () => {
+    const [selectedPerson, setSelectedPerson] = useState(people[4]);
     return (
-        <Select>
+        <Select value={selectedPerson} onChange={setSelectedPerson}>
+            <Select.Button>coucou</Select.Button>
             <Select.Options>
                 {people.map(person => (
                     <Select.Option key={person.id}>{person.name}</Select.Option>
