@@ -6,12 +6,14 @@ import React, {
     forwardRef,
     useCallback,
     useContext,
+    useId,
     useMemo,
     useReducer,
     useRef
 } from 'react';
 import { useMergeRefs } from '../../hooks/useMergeRefs';
 import { useClickOutside } from '../../hooks/useClickOutside';
+import { useControllable } from '../../hooks/useControllable';
 
 interface IStateDefinition {
     dropdownState: boolean;
@@ -85,9 +87,17 @@ interface ISelectOptions {
 
 interface ISelectOption {
     children?: ReactNode;
+    value: unknown;
+    disabled?: boolean;
 }
 
-const Select = ({ children }: ISelect) => {
+const Select = (props: ISelect) => {
+    const {
+        children,
+        value: controlledValue,
+        onChange: theirOnChange,
+        defaultValue
+    } = props;
     const [state, dispatch] = useReducer(selectActionsReducer, {
         dropdownState: false,
         options: [],
@@ -95,6 +105,12 @@ const Select = ({ children }: ISelect) => {
     });
     const buttonRef = useRef<HTMLButtonElement | null>(null);
     const optionsRef = useRef<HTMLUListElement | null>(null);
+
+    const [value, controlledOnChange] = useControllable(
+        controlledValue,
+        theirOnChange,
+        defaultValue
+    );
 
     const openSelect = useCallback(() => {
         dispatch({ type: 'OPEN_LIST' });
@@ -107,7 +123,8 @@ const Select = ({ children }: ISelect) => {
     const actions = useMemo<ReturnType<typeof useAction>>(
         () => ({
             closeSelect,
-            openSelect
+            openSelect,
+            onChange: controlledOnChange
         }),
         []
     );
@@ -174,13 +191,36 @@ const Options = forwardRef(
     }
 );
 
-const Option = ({ children }: ISelectOption) => {
-    return (
-        <li tabIndex={-1} role='option' aria-selected={false}>
-            {children}
-        </li>
-    );
-};
+const Option = forwardRef(
+    (props: ISelectOption, ref: ForwardedRef<HTMLLIElement>) => {
+        const { children, value, disabled = false } = props;
+        const internalId = useId();
+        const domElmOptionRef = useRef(null);
+
+        const optionRef = useMergeRefs([domElmOptionRef, ref]);
+
+        const dataOption = useMemo(
+            () => ({
+                id: internalId,
+                value,
+                domRef: domElmOptionRef,
+                disabled
+            }),
+            [value, internalId]
+        );
+
+        return (
+            <li
+                tabIndex={-1}
+                role='option'
+                aria-selected={false}
+                ref={optionRef}
+            >
+                {children}
+            </li>
+        );
+    }
+);
 
 Select.Button = Button;
 Select.Options = Options;

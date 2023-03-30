@@ -14,10 +14,12 @@ const ExempleSelect = () => {
     const [selectedPerson, setSelectedPerson] = useState(people[4]);
     return (
         <Select value={selectedPerson} onChange={setSelectedPerson}>
-            <Select.Button>coucou</Select.Button>
+            <Select.Button>{selectedPerson.name}</Select.Button>
             <Select.Options>
                 {people.map(person => (
-                    <Select.Option key={person.id}>{person.name}</Select.Option>
+                    <Select.Option key={person.id} value={person}>
+                        {person.name}
+                    </Select.Option>
                 ))}
             </Select.Options>
         </Select>
