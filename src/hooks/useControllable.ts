@@ -40,8 +40,11 @@ export function useControllable<T>(
     };
 
     if (value !== undefined) {
-        return [value as T, onChange];
+        return [value as T, onChange as (value: T) => void] as const;
     }
 
-    return [internalValue as T, handleUncontrolledChange as (value: T) => void];
+    return [
+        internalValue as T,
+        handleUncontrolledChange as (value: T) => void
+    ] as const;
 }

@@ -17,7 +17,11 @@ const ExempleSelect = () => {
             <Select.Button>{selectedPerson.name}</Select.Button>
             <Select.Options>
                 {people.map(person => (
-                    <Select.Option key={person.id} value={person}>
+                    <Select.Option
+                        key={person.id}
+                        value={person}
+                        disabled={person.unavailable}
+                    >
                         {person.name}
                     </Select.Option>
                 ))}

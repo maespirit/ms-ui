@@ -2,6 +2,7 @@ import React, {
     ForwardedRef,
     MutableRefObject,
     ReactNode,
+    SyntheticEvent,
     createContext,
     forwardRef,
     useCallback,
@@ -14,31 +15,64 @@ import React, {
 import { useMergeRefs } from '../../hooks/useMergeRefs';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { useControllable } from '../../hooks/useControllable';
+import useIsomorphicLayoutEffect from '../../hooks/useIsoMorphicEffect';
 
 interface IStateDefinition {
     dropdownState: boolean;
-    options: string[];
+    options: any[];
     activeOptionIndex: string | null;
+    propsRef: MutableRefObject<IDataPropsDefinition | null>;
 }
 
-interface IDataDefinition extends IStateDefinition {
+interface IDataPropsDefinition {
+    value: unknown;
+    disabled: boolean;
+}
+
+interface IDataContextDefinition
+    extends IStateDefinition,
+        IDataPropsDefinition {
     buttonRef: MutableRefObject<HTMLButtonElement | null>;
     optionsRef: MutableRefObject<HTMLUListElement | null>;
 }
 
-type Actions = { type: 'OPEN_LIST' } | { type: 'CLOSE_LIST' };
+type Actions =
+    | { type: 'OPEN_LIST' }
+    | { type: 'CLOSE_LIST' }
+    | { type: 'REGISTER_OPTION'; id: string; payload: any }
+    | { type: 'UNREGISTER_OPTION'; id: string };
 
 const selectActionsReducer = (state: IStateDefinition, action: Actions) => {
     switch (action.type) {
         case 'OPEN_LIST':
+            if (state.propsRef.current?.disabled) return state;
+            if (state.dropdownState) return state;
             return {
                 ...state,
                 dropdownState: true
             };
         case 'CLOSE_LIST':
+            if (state.propsRef.current?.disabled) return state;
+            if (!state.dropdownState) return state;
             return {
                 ...state,
                 dropdownState: false
+            };
+        case 'REGISTER_OPTION':
+            let newOption = { id: action.id, data: action.payload };
+            return {
+                ...state,
+                options: [...state.options, newOption]
+            };
+        case 'UNREGISTER_OPTION':
+            let index = state.options.findIndex(a => a.id === action.id);
+            const cleanedOptions = [...state.options];
+            if (index !== -1) {
+                cleanedOptions.splice(index, 1);
+            }
+            return {
+                ...state,
+                options: cleanedOptions
             };
         default: {
             return state;
@@ -46,11 +80,13 @@ const selectActionsReducer = (state: IStateDefinition, action: Actions) => {
     }
 };
 
-const SelectContextData = createContext<IDataDefinition | null>(null);
+const SelectContextData = createContext<IDataContextDefinition | null>(null);
 
 const SelectContextActions = createContext<{
     closeSelect: () => void;
     openSelect: () => void;
+    registerOption: (id: string, payload: any) => void;
+    onChange: (value: unknown) => void;
 } | null>(null);
 
 const useData = () => {
@@ -79,6 +115,7 @@ interface ISelect {
     defaultValue?: unknown;
     onChange?(value: unknown): void;
     multiple?: boolean;
+    disabled?: boolean;
 }
 
 interface ISelectOptions {
@@ -96,15 +133,20 @@ const Select = (props: ISelect) => {
         children,
         value: controlledValue,
         onChange: theirOnChange,
-        defaultValue
+        defaultValue,
+        disabled = false
     } = props;
+
+    const buttonRef = useRef<HTMLButtonElement | null>(null);
+    const optionsRef = useRef<HTMLUListElement | null>(null);
+    const propsRef = useRef<IDataPropsDefinition | null>(null);
+
     const [state, dispatch] = useReducer(selectActionsReducer, {
         dropdownState: false,
         options: [],
-        activeOptionIndex: null
+        activeOptionIndex: null,
+        propsRef: propsRef
     });
-    const buttonRef = useRef<HTMLButtonElement | null>(null);
-    const optionsRef = useRef<HTMLUListElement | null>(null);
 
     const [value, controlledOnChange] = useControllable(
         controlledValue,
@@ -120,18 +162,37 @@ const Select = (props: ISelect) => {
         dispatch({ type: 'CLOSE_LIST' });
     }, []);
 
+    const registerOption = useCallback((id: string, payload: any) => {
+        dispatch({ type: 'REGISTER_OPTION', id, payload });
+        return () => dispatch({ type: 'UNREGISTER_OPTION', id });
+    }, []);
+
     const actions = useMemo<ReturnType<typeof useAction>>(
         () => ({
             closeSelect,
             openSelect,
+            registerOption,
             onChange: controlledOnChange
         }),
         []
     );
 
+    const theirProps = useMemo(
+        () => ({
+            value,
+            disabled
+        }),
+        [value, disabled]
+    );
+
+    useIsomorphicLayoutEffect(() => {
+        state.propsRef.current = theirProps;
+    }, [theirProps]);
+
     const data = useMemo<ReturnType<typeof useData>>(
         () => ({
             ...state,
+            ...theirProps,
             buttonRef,
             optionsRef
         }),
@@ -165,7 +226,14 @@ const Button = forwardRef(
         };
 
         return (
-            <button onClick={handleClick} ref={buttonRef}>
+            <button
+                type='button'
+                onClick={handleClick}
+                ref={buttonRef}
+                disabled={data.disabled}
+                aria-haspopup='listbox'
+                aria-expanded={data.disabled ? undefined : data.dropdownState}
+            >
                 {children}
             </button>
         );
@@ -196,6 +264,7 @@ const Option = forwardRef(
         const { children, value, disabled = false } = props;
         const internalId = useId();
         const domElmOptionRef = useRef(null);
+        const actions = useAction();
 
         const optionRef = useMergeRefs([domElmOptionRef, ref]);
 
@@ -209,12 +278,24 @@ const Option = forwardRef(
             [value, internalId]
         );
 
+        useIsomorphicLayoutEffect(() =>
+            actions.registerOption(internalId, dataOption)
+        );
+
+        const handleClick = useCallback((e: SyntheticEvent) => {
+            if (disabled) return e.preventDefault();
+            actions.onChange(value);
+            actions.closeSelect();
+        }, []);
+
         return (
             <li
                 tabIndex={-1}
                 role='option'
                 aria-selected={false}
+                aria-disabled={disabled ? true : undefined}
                 ref={optionRef}
+                onClick={handleClick}
             >
                 {children}
             </li>
