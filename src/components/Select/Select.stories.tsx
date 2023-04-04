@@ -6,8 +6,9 @@ const people = [
     { id: 1, name: 'Durward Reynolds', unavailable: false },
     { id: 2, name: 'Kenton Towne', unavailable: false },
     { id: 3, name: 'Therese Wunsch', unavailable: false },
-    { id: 4, name: 'Benedict Kessler', unavailable: true },
-    { id: 5, name: 'Katelyn Rohan', unavailable: false }
+    { id: 4, name: 'Theo Wunsch', unavailable: false },
+    { id: 5, name: 'Benedict Kessler', unavailable: true },
+    { id: 6, name: 'Katelyn Rohan', unavailable: false }
 ];
 
 const ExempleSelect = () => {
@@ -22,7 +23,11 @@ const ExempleSelect = () => {
                         value={person}
                         disabled={person.unavailable}
                     >
-                        {person.name}
+                        {(active, selected) =>
+                            `${selected ? 'V ' : ''}${person.name}${
+                                active ? '<--' : ''
+                            }`
+                        }
                     </Select.Option>
                 ))}
             </Select.Options>
