@@ -12,10 +12,16 @@ const people = [
 ];
 
 const ExempleSelect = () => {
-    const [selectedPerson, setSelectedPerson] = useState(people[4]);
+    const [selectedPerson, setSelectedPerson] = useState<
+        { id: number; name: string; unavailable: boolean }[]
+    >([]);
     return (
-        <Select value={selectedPerson} onChange={setSelectedPerson}>
-            <Select.Button>{selectedPerson.name}</Select.Button>
+        <Select value={selectedPerson} onChange={setSelectedPerson} multiple>
+            <Select.Button>
+                {selectedPerson.length > 0
+                    ? selectedPerson.map(person => person.name).join(', ')
+                    : 'Sélectionnez une personne...'}
+            </Select.Button>
             <Select.Options>
                 {people.map(person => (
                     <Select.Option

@@ -7,10 +7,10 @@ export function useControllable<T>(
 ) {
     const [internalValue, setInternalValue] = useState(defaultValue);
 
-    let isControlled = value !== undefined;
-    let wasControlled = useRef(isControlled);
-    let didWarnOnUncontrolledToControlled = useRef(false);
-    let didWarnOnControlledToUncontrolled = useRef(false);
+    const isControlled = value !== undefined;
+    const wasControlled = useRef(isControlled);
+    const didWarnOnUncontrolledToControlled = useRef(false);
+    const didWarnOnControlledToUncontrolled = useRef(false);
 
     if (
         isControlled &&

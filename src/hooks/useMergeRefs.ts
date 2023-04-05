@@ -18,6 +18,5 @@ export function useMergeRefs<Instance>(
                 }
             });
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, refs);
 }

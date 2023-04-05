@@ -25,14 +25,15 @@ interface IStateDefinition<T> {
     dropdownState: boolean;
     options: { id: string; dataOptionRef: IDataOptionRef<T> }[];
     activeOptionIndex: number | null;
-    dataContextRef: MutableRefObject<IDataContextDefinition<T> | null>;
+    dataContextRef: MutableRefObject<IDataContextDefinition | null>;
     searchQuery: string;
 }
 
-interface IDataContextDefinition<T> extends IStateDefinition<T> {
-    isSelected: (value: T) => boolean;
-    value: T;
+interface IDataContextDefinition extends IStateDefinition<unknown> {
+    isSelected: (value: unknown) => boolean;
+    value: unknown;
     disabled: boolean;
+    mode: 'single' | 'multiple';
     buttonRef: MutableRefObject<HTMLButtonElement | null>;
     optionsRef: MutableRefObject<HTMLUListElement | null>;
 }
@@ -54,7 +55,7 @@ type Actions =
     | { type: 'SEARCH'; value: string }
     | { type: 'CLEAR_SEARCH' };
 
-const selectActionsReducer = <T extends unknown>(
+const selectActionsReducer = <T,>(
     state: IStateDefinition<T>,
     action: Actions
 ) => {
@@ -76,7 +77,7 @@ const selectActionsReducer = <T extends unknown>(
                 activeOptionIndex: null,
                 dropdownState: false
             };
-        case 'REGISTER_OPTION':
+        case 'REGISTER_OPTION': {
             const newOption = { id: action.id, dataOptionRef: action.payload };
 
             const newListOption = [...state.options, newOption];
@@ -100,7 +101,8 @@ const selectActionsReducer = <T extends unknown>(
                 activeOptionIndex: currentActiveOptionIndex,
                 options: newListOption
             };
-        case 'UNREGISTER_OPTION':
+        }
+        case 'UNREGISTER_OPTION': {
             const index = state.options.findIndex(a => a.id === action.id);
             const cleanedOptions = [...state.options];
             if (index !== -1) {
@@ -110,7 +112,8 @@ const selectActionsReducer = <T extends unknown>(
                 ...state,
                 options: cleanedOptions
             };
-        case 'GO_TO_OPTION':
+        }
+        case 'GO_TO_OPTION': {
             if (state.dataContextRef.current?.disabled) return state;
             const activeOptionIndex = calculateActiveIndex(action, {
                 resolveItems: () => state.options,
@@ -122,7 +125,8 @@ const selectActionsReducer = <T extends unknown>(
                 ...state,
                 activeOptionIndex
             };
-        case 'SEARCH':
+        }
+        case 'SEARCH': {
             if (!state.dropdownState || state.dataContextRef.current?.disabled)
                 return state;
 
@@ -148,6 +152,7 @@ const selectActionsReducer = <T extends unknown>(
                 searchQuery,
                 activeOptionIndex: matchIndex
             };
+        }
         case 'CLEAR_SEARCH':
             if (
                 state.searchQuery === '' ||
@@ -162,9 +167,7 @@ const selectActionsReducer = <T extends unknown>(
     }
 };
 
-const SelectContextData = createContext<IDataContextDefinition<any> | null>(
-    null
-);
+const SelectContextData = createContext<IDataContextDefinition | null>(null);
 
 const SelectContextActions = createContext<{
     closeSelect: () => void;
@@ -178,9 +181,9 @@ const SelectContextActions = createContext<{
 } | null>(null);
 
 const useData = () => {
-    let context = useContext(SelectContextData);
+    const context = useContext(SelectContextData);
     if (context === null) {
-        let err = new Error(`le context data n'existe pas`);
+        const err = new Error(`le context data n'existe pas`);
         if (Error.captureStackTrace) Error.captureStackTrace(err, useData);
         throw err;
     }
@@ -188,20 +191,20 @@ const useData = () => {
 };
 
 const useAction = () => {
-    let context = useContext(SelectContextActions);
+    const context = useContext(SelectContextActions);
     if (context === null) {
-        let err = new Error(`le context action n'existe pas`);
+        const err = new Error(`le context action n'existe pas`);
         if (Error.captureStackTrace) Error.captureStackTrace(err, useAction);
         throw err;
     }
     return context;
 };
 
-interface ISelect {
+interface ISelect<T> {
     children?: ReactNode;
-    value?: unknown;
-    defaultValue?: unknown;
-    onChange?(value: unknown): void;
+    value?: T;
+    defaultValue?: T;
+    onChange?(value: T): void;
     multiple?: boolean;
     disabled?: boolean;
 }
@@ -210,24 +213,25 @@ interface ISelectOptions {
     children?: ReactNode;
 }
 
-interface ISelectOption {
+interface ISelectOption<T> {
     children?: ReactNode | ((active: boolean, selected: boolean) => ReactNode);
-    value: unknown;
+    value: T;
     disabled?: boolean;
 }
 
-const Select = (props: ISelect) => {
+const Select = <T,>(props: ISelect<T>) => {
     const {
         children,
         value: controlledValue,
         onChange: theirOnChange,
         defaultValue,
+        multiple = false,
         disabled = false
     } = props;
 
     const buttonRef = useRef<HTMLButtonElement | null>(null);
     const optionsRef = useRef<HTMLUListElement | null>(null);
-    const dataContextRef = useRef<IDataContextDefinition<any> | null>(null);
+    const dataContextRef = useRef<IDataContextDefinition | null>(null);
 
     const [state, dispatch] = useReducer(selectActionsReducer, {
         dropdownState: false,
@@ -237,11 +241,8 @@ const Select = (props: ISelect) => {
         searchQuery: ''
     });
 
-    const [value, controlledOnChange] = useControllable(
-        controlledValue,
-        theirOnChange,
-        defaultValue
-    );
+    const [value = multiple ? ([] as T[]) : undefined, controlledOnChange] =
+        useControllable<any>(controlledValue, theirOnChange, defaultValue);
 
     const openSelect = useCallback(() => {
         dispatch({ type: 'OPEN_LIST' });
@@ -279,9 +280,48 @@ const Select = (props: ISelect) => {
 
     const isSelected = useCallback(
         (compareValue: unknown) => {
-            return value === compareValue;
+            if (!multiple) {
+                return value === compareValue;
+            } else {
+                return (value as T[]).some(option => compareValue === option);
+            }
         },
-        [value]
+        [value, multiple]
+    );
+
+    const data = useMemo<ReturnType<typeof useData>>(
+        () => ({
+            ...state,
+            value,
+            disabled,
+            mode: multiple ? 'multiple' : 'single',
+            isSelected,
+            buttonRef,
+            optionsRef
+        }),
+        [state, value, disabled, multiple]
+    );
+
+    useIsomorphicLayoutEffect(() => {
+        state.dataContextRef.current = data;
+    }, [data]);
+
+    const onChange = useCallback(
+        (val: unknown) => {
+            if (!multiple) {
+                return controlledOnChange(val as T);
+            } else {
+                const copy = [...(value as T[])];
+                const idx = copy.findIndex(item => item === val);
+                if (idx === -1) {
+                    copy.push(val as T);
+                } else {
+                    copy.splice(idx, 1);
+                }
+                return controlledOnChange(copy as T[]);
+            }
+        },
+        [multiple, value]
     );
 
     const actions = useMemo<ReturnType<typeof useAction>>(
@@ -290,28 +330,12 @@ const Select = (props: ISelect) => {
             openSelect,
             registerOption,
             goToOption,
-            onChange: controlledOnChange,
+            onChange,
             search,
             clearSearch
         }),
-        []
+        [onChange]
     );
-
-    const data = useMemo<ReturnType<typeof useData>>(
-        () => ({
-            ...state,
-            value,
-            disabled,
-            isSelected,
-            buttonRef,
-            optionsRef
-        }),
-        [state, value, disabled]
-    );
-
-    useIsomorphicLayoutEffect(() => {
-        state.dataContextRef.current = data;
-    }, [data]);
 
     useClickOutside(() => closeSelect(), null, [
         data.buttonRef,
@@ -339,10 +363,31 @@ const Button = forwardRef(
             else actions.openSelect();
         };
 
+        const handleOnKeyDown = useCallback((e: React.KeyboardEvent) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                    e.preventDefault();
+                    actions.openSelect();
+                    actions.goToOption(Focus.Last);
+                    break;
+
+                case 'Space':
+                case 'ArrowDown':
+                case 'Enter':
+                    e.preventDefault();
+                    actions.openSelect();
+                    actions.goToOption(Focus.First);
+                    break;
+                default:
+                    break;
+            }
+        }, []);
+
         return (
             <button
                 type='button'
                 onClick={handleClick}
+                onKeyDown={handleOnKeyDown}
                 ref={buttonRef}
                 disabled={data.disabled}
                 aria-haspopup='listbox'
@@ -403,10 +448,14 @@ const Options = forwardRef(
                             actions.onChange(dataOptionRef.current.value);
                             return actions.closeSelect();
                         }
+                        break;
                     case 'Escape':
                         e.preventDefault();
                         e.stopPropagation();
-                        return actions.closeSelect();
+                        actions.closeSelect();
+                        return data.buttonRef.current?.focus({
+                            preventScroll: true
+                        });
                     default:
                         e.preventDefault();
                         e.stopPropagation();
@@ -437,7 +486,7 @@ const Options = forwardRef(
 );
 
 const Option = forwardRef(
-    (props: ISelectOption, ref: ForwardedRef<HTMLLIElement>) => {
+    <T,>(props: ISelectOption<T>, ref: ForwardedRef<HTMLLIElement>) => {
         const { children, value, disabled = false } = props;
         const internalId = useId();
         const domElmOptionRef = useRef(null);
@@ -493,6 +542,10 @@ const Option = forwardRef(
         );
     }
 );
+
+Button.displayName = 'Button';
+Options.displayName = 'Options';
+Option.displayName = 'Option';
 
 Select.Button = Button;
 Select.Options = Options;
