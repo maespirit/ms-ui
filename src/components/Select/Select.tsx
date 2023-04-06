@@ -1,5 +1,6 @@
 import React, {
     ForwardedRef,
+    HTMLAttributes,
     MutableRefObject,
     ReactNode,
     SyntheticEvent,
@@ -209,7 +210,11 @@ interface ISelect<T> {
     disabled?: boolean;
 }
 
-interface ISelectOptions {
+interface ISelectOptions extends HTMLAttributes<HTMLUListElement> {
+    children?: ReactNode;
+}
+
+interface ISelectButton extends HTMLAttributes<HTMLButtonElement> {
     children?: ReactNode;
 }
 
@@ -352,7 +357,10 @@ const Select = <T,>(props: ISelect<T>) => {
 };
 
 const Button = forwardRef(
-    ({ children }: ISelectOptions, ref: ForwardedRef<HTMLButtonElement>) => {
+    (
+        { children, ...otherProps }: ISelectButton,
+        ref: ForwardedRef<HTMLButtonElement>
+    ) => {
         const actions = useAction();
         const data = useData();
 
@@ -392,6 +400,7 @@ const Button = forwardRef(
                 disabled={data.disabled}
                 aria-haspopup='listbox'
                 aria-expanded={data.disabled ? undefined : data.dropdownState}
+                {...otherProps}
             >
                 {children}
             </button>

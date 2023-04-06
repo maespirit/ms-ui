@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Select from './Select';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react';
 
 const people = [
     { id: 1, name: 'Durward Reynolds', unavailable: false },
@@ -41,9 +41,45 @@ const ExempleSelect = () => {
     );
 };
 
-export default {
-    title: 'Select',
-    component: Select
-} as ComponentMeta<typeof Select>;
+const ExempleBisSelect = () => {
+    const [selectedPerson, setSelectedPerson] = useState<
+        { id: number; name: string; unavailable: boolean }[]
+    >([]);
+    return (
+        <Select value={selectedPerson} onChange={setSelectedPerson} multiple>
+            <Select.Button className='relative cursor-default border border-solid border-slate-200 text-slate-900/50 text-xs rounded-lg bg-white py-3 pl-4 pr-10 text-left focus:outline-none focus-visible:ring-2 ring-offset-2 ring-pink-500'>
+                {selectedPerson.length > 0
+                    ? selectedPerson.map(person => person.name).join(', ')
+                    : 'Sélectionnez une personne...'}
+            </Select.Button>
+            <Select.Options>
+                {people.map(person => (
+                    <Select.Option
+                        key={person.id}
+                        value={person}
+                        disabled={person.unavailable}
+                    >
+                        {(active, selected) =>
+                            `${selected ? 'V ' : ''}${person.name}${
+                                active ? '<--' : ''
+                            }`
+                        }
+                    </Select.Option>
+                ))}
+            </Select.Options>
+        </Select>
+    );
+};
 
-export const Primary: ComponentStory<typeof Select> = () => <ExempleSelect />;
+const meta: Meta<typeof Select> = { component: Select };
+export default meta;
+
+type Story = StoryObj<typeof Select>;
+
+export const Primary: Story = {
+    render: () => <ExempleSelect />
+};
+
+export const Exemple: Story = {
+    render: () => <ExempleBisSelect />
+};
