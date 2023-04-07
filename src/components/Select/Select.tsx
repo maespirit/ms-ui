@@ -214,14 +214,28 @@ interface ISelectOptions extends HTMLAttributes<HTMLUListElement> {
     children?: ReactNode;
 }
 
-interface ISelectButton extends HTMLAttributes<HTMLButtonElement> {
-    children?: ReactNode;
+interface ISelectButton {
+    className?: string | ((open: boolean) => string);
+    children?: ReactNode | ((open: boolean) => ReactNode);
 }
 
 interface ISelectOption<T> {
-    children?: ReactNode | ((active: boolean, selected: boolean) => ReactNode);
+    children?:
+        | ReactNode
+        | ((p: {
+              active: boolean;
+              selected: boolean;
+              disabled: boolean;
+          }) => ReactNode);
     value: T;
     disabled?: boolean;
+    className?:
+        | string
+        | ((p: {
+              active: boolean;
+              selected: boolean;
+              disabled: boolean;
+          }) => string);
 }
 
 const Select = <T,>(props: ISelect<T>) => {
@@ -391,25 +405,37 @@ const Button = forwardRef(
             }
         }, []);
 
-        return (
-            <button
-                type='button'
-                onClick={handleClick}
-                onKeyDown={handleOnKeyDown}
-                ref={buttonRef}
-                disabled={data.disabled}
-                aria-haspopup='listbox'
-                aria-expanded={data.disabled ? undefined : data.dropdownState}
-                {...otherProps}
-            >
-                {children}
-            </button>
+        const open = data.dropdownState;
+
+        if (
+            'className' in otherProps &&
+            otherProps.className &&
+            typeof otherProps.className === 'function'
+        ) {
+            otherProps.className = otherProps.className(open);
+        }
+
+        return React.createElement(
+            'button',
+            {
+                onClick: handleClick,
+                onKeyDown: handleOnKeyDown,
+                ref: buttonRef,
+                disabled: data.disabled,
+                ariaHaspopup: 'listbox',
+                ariaExpanded: data.disabled ? undefined : data.dropdownState,
+                ...otherProps
+            },
+            typeof children == 'function' ? children(open) : children
         );
     }
 );
 
 const Options = forwardRef(
-    ({ children }: ISelectOptions, ref: ForwardedRef<HTMLUListElement>) => {
+    (
+        { children, ...otherProps }: ISelectOptions,
+        ref: ForwardedRef<HTMLUListElement>
+    ) => {
         const data = useData();
         const actions = useAction();
         const optionsRef = useMergeRefs([data.optionsRef, ref]);
@@ -455,7 +481,8 @@ const Options = forwardRef(
                             const { dataOptionRef } =
                                 data.options[data.activeOptionIndex];
                             actions.onChange(dataOptionRef.current.value);
-                            return actions.closeSelect();
+                            if (data.mode == 'single')
+                                return actions.closeSelect();
                         }
                         break;
                     case 'Escape':
@@ -487,6 +514,7 @@ const Options = forwardRef(
                 tabIndex={0}
                 ref={optionsRef}
                 onKeyDown={handleOnKeyDown}
+                {...otherProps}
             >
                 {children}
             </ul>
@@ -496,7 +524,7 @@ const Options = forwardRef(
 
 const Option = forwardRef(
     <T,>(props: ISelectOption<T>, ref: ForwardedRef<HTMLLIElement>) => {
-        const { children, value, disabled = false } = props;
+        const { children, value, disabled = false, ...otherProps } = props;
         const internalId = useId();
         const domElmOptionRef = useRef(null);
         const actions = useAction();
@@ -523,31 +551,47 @@ const Option = forwardRef(
 
         const selected = data.isSelected(value);
 
-        const handleClick = useCallback((e: SyntheticEvent) => {
-            if (disabled) return e.preventDefault();
-            actions.onChange(value);
-            actions.closeSelect();
-        }, []);
+        const handleClick = useCallback(
+            (e: SyntheticEvent) => {
+                if (disabled) return e.preventDefault();
+                actions.onChange(value);
+                data.mode == 'single' && actions.closeSelect();
+            },
+            [data.mode, actions]
+        );
 
         const handleMove = useCallback(() => {
             if (disabled || active) return;
             actions.goToOption(Focus.Specific, internalId);
         }, []);
 
-        return (
-            <li
-                tabIndex={-1}
-                role='option'
-                aria-selected={selected}
-                aria-disabled={disabled ? true : undefined}
-                ref={optionRef}
-                onClick={handleClick}
-                onMouseMove={handleMove}
-            >
-                {typeof children == 'function'
-                    ? children(active, selected)
-                    : children}
-            </li>
+        if (
+            'className' in otherProps &&
+            otherProps.className &&
+            typeof otherProps.className === 'function'
+        ) {
+            otherProps.className = otherProps.className({
+                active,
+                selected,
+                disabled
+            });
+        }
+
+        return React.createElement(
+            'li',
+            {
+                tabIndex: '-1',
+                role: 'option',
+                ariaSelected: selected,
+                ariaDisabled: disabled ? true : undefined,
+                ref: optionRef,
+                onClick: handleClick,
+                onMouseMove: handleMove,
+                ...otherProps
+            },
+            typeof children == 'function'
+                ? children({ active, selected, disabled })
+                : children
         );
     }
 );
