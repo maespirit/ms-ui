@@ -1,26 +1,67 @@
 import React, {
-    Children,
     ForwardedRef,
     LabelHTMLAttributes,
-    cloneElement,
+    MutableRefObject,
+    createContext,
     forwardRef,
-    isValidElement,
-    useId
+    useContext,
+    useId,
+    useMemo,
+    useRef
 } from 'react';
 import { InputHTMLAttributes } from 'react';
 import { useControllable } from '../../hooks/useControllable';
+import { useMergeRefs } from '../../hooks/useMergeRefs';
+import { useCheckboxGroupData } from './CheckboxGroup';
 
 interface CheckboxProps {
     children: React.ReactNode;
     checked?: boolean;
     onChange?: React.ChangeEventHandler<HTMLInputElement>;
+    disabled?: boolean;
+    value?: string;
 }
 
-const Checkbox = ({
-    checked: theirChecked,
-    onChange: theirOnChange,
-    children
-}: CheckboxProps) => {
+interface CheckboxContextDefinition {
+    id: string;
+    checked: boolean;
+    value?: string;
+    disabled: boolean;
+    onChange: React.ChangeEventHandler<HTMLInputElement>;
+    inputRef: MutableRefObject<HTMLInputElement | null>;
+    labelRef: MutableRefObject<HTMLLabelElement | null>;
+}
+
+const CheckboxContext = createContext<CheckboxContextDefinition | null>(null);
+
+const useData = () => {
+    const context = useContext(CheckboxContext);
+    if (context === null) {
+        const err = new Error(`Context is missing`);
+        if (Error.captureStackTrace) Error.captureStackTrace(err, useData);
+        throw err;
+    }
+    return context;
+};
+
+const Checkbox = (props: CheckboxProps) => {
+    const {
+        checked: theirChecked,
+        onChange: theirOnChange,
+        disabled = false,
+        children,
+        value
+    } = props;
+
+    const groupCtx = useCheckboxGroupData();
+
+    const contextProps = groupCtx
+        ? {
+              checked: groupCtx.value.includes(value as string),
+              onChange: groupCtx.onChange
+          }
+        : {};
+
     const [checked, onChange] = useControllable<any>(
         theirChecked,
         theirOnChange
@@ -28,57 +69,63 @@ const Checkbox = ({
 
     const internalId = useId();
 
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    const labelRef = useRef<HTMLLabelElement | null>(null);
+
+    const data = useMemo<ReturnType<typeof useData>>(
+        () => ({
+            checked,
+            disabled,
+            onChange,
+            value,
+            labelRef,
+            inputRef,
+            id: internalId,
+            ...contextProps
+        }),
+        [checked, disabled]
+    );
+
     return (
-        <>
-            {Children.map(children, child => {
-                if (isValidElement(child)) {
-                    if (child.type === CheckboxInput) {
-                        return cloneElement(
-                            child as React.ReactElement<
-                                InputHTMLAttributes<HTMLInputElement>
-                            >,
-                            {
-                                id: internalId,
-                                checked: checked,
-                                onChange: onChange
-                            }
-                        );
-                    } else if (child.type === CheckboxLabel) {
-                        return cloneElement(
-                            child as React.ReactElement<
-                                LabelHTMLAttributes<HTMLLabelElement>
-                            >,
-                            {
-                                htmlFor: internalId
-                            }
-                        );
-                    } else {
-                        return child;
-                    }
-                }
-            })}
-        </>
+        <CheckboxContext.Provider value={data}>
+            {children}
+        </CheckboxContext.Provider>
     );
 };
 
-const CheckboxInput = ({
-    id,
-    checked,
-    onChange
-}: InputHTMLAttributes<HTMLInputElement>) => {
-    return (
-        <input type='checkbox' id={id} checked={checked} onChange={onChange} />
-    );
-};
+const CheckboxInput = forwardRef(
+    (
+        props: InputHTMLAttributes<HTMLInputElement>,
+        ref: ForwardedRef<HTMLInputElement>
+    ) => {
+        const data = useData();
+
+        const inputRef = useMergeRefs([data.inputRef, ref]);
+
+        return (
+            <input
+                {...props}
+                type='checkbox'
+                id={data.id}
+                checked={data.checked}
+                onChange={data.onChange}
+                ref={inputRef}
+                value={data.value}
+            />
+        );
+    }
+);
 
 const CheckboxLabel = forwardRef(
     (
         { children, ...otherProps }: LabelHTMLAttributes<HTMLLabelElement>,
         ref: ForwardedRef<HTMLLabelElement>
     ) => {
-        CheckboxLabel.displayName = 'CheckboxLabel';
+        const data = useData();
+        const labelRef = useMergeRefs([data.labelRef, ref]);
+
         return (
-            <label {...otherProps} ref={ref}>
+            <label {...otherProps} htmlFor={data.id} ref={labelRef}>
                 {children}
             </label>
         );
@@ -87,5 +134,8 @@ const CheckboxLabel = forwardRef(
 
 Checkbox.Input = CheckboxInput;
 Checkbox.Label = CheckboxLabel;
+
+CheckboxLabel.displayName = 'CheckboxLabel';
+CheckboxInput.displayName = 'CheckboxInput';
 
 export default Checkbox;
