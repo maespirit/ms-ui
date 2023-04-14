@@ -83,7 +83,7 @@ const Checkbox = (props: CheckboxProps) => {
             id: internalId,
             ...contextProps
         }),
-        [checked, disabled]
+        [checked, disabled, contextProps]
     );
 
     return (

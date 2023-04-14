@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Meta, StoryObj } from '@storybook/react';
 import Checkbox from './Checkbox';
 import CheckboxGroup from './CheckboxGroup';
@@ -73,16 +73,19 @@ const ExempleBisCheckbox = () => {
 const ExempleCheckboxGroup = () => {
     const [value, setValue] = useState<string[]>([]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const currValue = e.currentTarget.value;
-        if (!value.includes(currValue)) setValue(x => [...x, currValue]);
-        else {
-            const copy = [...value];
-            const index = copy.indexOf(currValue);
-            copy.splice(index, 1);
-            setValue(copy);
-        }
-    };
+    const handleChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const currValue = e.currentTarget.value;
+            console.log(currValue, value, value.includes(currValue));
+            if (value.includes(currValue)) {
+                const copy = [...value];
+                const index = copy.indexOf(currValue);
+                copy.splice(index, 1);
+                setValue(copy);
+            } else setValue(x => [...x, currValue]);
+        },
+        [value]
+    );
 
     return (
         <CheckboxGroup value={value} onChange={handleChange}>

@@ -23,7 +23,7 @@ const CheckboxGroup = (props: CheckboxGroupProps) => {
             value,
             onChange
         }),
-        [value]
+        [value, onChange]
     );
 
     return (
