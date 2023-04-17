@@ -215,8 +215,8 @@ interface ISelectOptions extends HTMLAttributes<HTMLUListElement> {
 }
 
 interface ISelectButton {
-    className?: string | ((open: boolean) => string);
-    children?: ReactNode | ((open: boolean) => ReactNode);
+    className?: string | ((p: { open: boolean }) => string);
+    children?: ReactNode | ((p: { open: boolean }) => ReactNode);
 }
 
 interface ISelectOption<T> {
@@ -412,7 +412,7 @@ const Button = forwardRef(
             otherProps.className &&
             typeof otherProps.className === 'function'
         ) {
-            otherProps.className = otherProps.className(open);
+            otherProps.className = otherProps.className({ open });
         }
 
         return React.createElement(
@@ -422,11 +422,11 @@ const Button = forwardRef(
                 onKeyDown: handleOnKeyDown,
                 ref: buttonRef,
                 disabled: data.disabled,
-                ariaHaspopup: 'listbox',
-                ariaExpanded: data.disabled ? undefined : data.dropdownState,
+                'aria-haspopup': 'listbox',
+                'aria-expanded': data.disabled ? undefined : data.dropdownState,
                 ...otherProps
             },
-            typeof children == 'function' ? children(open) : children
+            typeof children == 'function' ? children({ open }) : children
         );
     }
 );
@@ -582,8 +582,8 @@ const Option = forwardRef(
             {
                 tabIndex: '-1',
                 role: 'option',
-                ariaSelected: selected,
-                ariaDisabled: disabled ? true : undefined,
+                'aria-selected': selected,
+                'aria-disabled': disabled ? true : undefined,
                 ref: optionRef,
                 onClick: handleClick,
                 onMouseMove: handleMove,

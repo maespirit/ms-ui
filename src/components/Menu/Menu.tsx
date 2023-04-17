@@ -1,9 +1,9 @@
 import React, {
+    ButtonHTMLAttributes,
     ForwardedRef,
     HTMLAttributes,
     MutableRefObject,
     ReactNode,
-    SyntheticEvent,
     createContext,
     forwardRef,
     useCallback,
@@ -269,8 +269,8 @@ const Menu = (props: IMenu) => {
 };
 
 interface IMenuButton {
-    className?: string | ((open: boolean) => string);
-    children?: ReactNode | ((open: boolean) => ReactNode);
+    className?: string | ((p: { open: boolean }) => string);
+    children?: ReactNode | ((p: { open: boolean }) => ReactNode);
 }
 
 const Button = forwardRef(
@@ -315,7 +315,7 @@ const Button = forwardRef(
             otherProps.className &&
             typeof otherProps.className === 'function'
         ) {
-            otherProps.className = otherProps.className(open);
+            otherProps.className = otherProps.className({ open });
         }
 
         return React.createElement(
@@ -325,11 +325,11 @@ const Button = forwardRef(
                 onKeyDown: handleOnKeyDown,
                 ref: buttonRef,
                 disabled: data.disabled,
-                ariaHaspopup: 'menu',
-                ariaExpanded: data.disabled ? undefined : data.dropdownState,
+                'aria-haspopup': 'menu',
+                'aria-disabled': data.disabled ? undefined : data.dropdownState,
                 ...otherProps
             },
-            typeof children == 'function' ? children(open) : children
+            typeof children == 'function' ? children({ open }) : children
         );
     }
 );
@@ -425,7 +425,11 @@ const Items = forwardRef(
     }
 );
 
-interface IMenuItem {
+interface IMenuItem
+    extends Omit<
+        ButtonHTMLAttributes<HTMLButtonElement>,
+        'className' | 'children'
+    > {
     children?:
         | ReactNode
         | ((p: { active: boolean; disabled: boolean }) => ReactNode);
@@ -437,7 +441,7 @@ interface IMenuItem {
 
 const Item = forwardRef(
     (props: IMenuItem, ref: ForwardedRef<HTMLButtonElement>) => {
-        const { children, disabled = false, ...otherProps } = props;
+        const { children, disabled = false, onClick, ...otherProps } = props;
         const internalId = useId();
         const domElmItemRef = useRef<HTMLButtonElement | null>(null);
         const actions = useAction();
@@ -462,8 +466,9 @@ const Item = forwardRef(
                 : false;
 
         const handleClick = useCallback(
-            (e: SyntheticEvent) => {
+            (e: React.MouseEvent<HTMLButtonElement>) => {
                 if (disabled) return e.preventDefault();
+                onClick && onClick(e);
                 actions.closeMenu();
             },
             [actions, disabled]
@@ -488,12 +493,12 @@ const Item = forwardRef(
         return React.createElement(
             'button',
             {
+                ...otherProps,
                 role: 'menuitem',
-                ariaDisabled: disabled ? true : undefined,
+                'aria-disabled': disabled ? true : undefined,
                 ref: optionRef,
                 onClick: handleClick,
-                onMouseMove: handleMove,
-                ...otherProps
+                onMouseMove: handleMove
             },
             typeof children == 'function'
                 ? children({ active, disabled })

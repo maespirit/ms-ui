@@ -50,7 +50,7 @@ const EXComponentCheckbox = ({
                         </svg>
                     </span>
                 </div>
-                <Checkbox.Label className='pl-2 text-sm leading-none'>
+                <Checkbox.Label className='pl-2 text-sm leading-none select-none'>
                     {label}
                 </Checkbox.Label>
             </div>
@@ -76,7 +76,6 @@ const ExempleCheckboxGroup = () => {
     const handleChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
             const currValue = e.currentTarget.value;
-            console.log(currValue, value, value.includes(currValue));
             if (value.includes(currValue)) {
                 const copy = [...value];
                 const index = copy.indexOf(currValue);
@@ -97,7 +96,7 @@ const ExempleCheckboxGroup = () => {
     );
 };
 
-const meta: Meta<typeof Checkbox> = { component: Checkbox };
+const meta: Meta<typeof Checkbox> = { title: 'Checkbox', component: Checkbox };
 export default meta;
 
 type Story = StoryObj<typeof Checkbox>;

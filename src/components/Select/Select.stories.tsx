@@ -49,7 +49,7 @@ const ExempleBisSelect = () => {
         <Select value={selectedPerson} onChange={setSelectedPerson} multiple>
             <div className='relative w-72'>
                 <Select.Button
-                    className={open =>
+                    className={({ open }) =>
                         `relative cursor-default ${
                             open
                                 ? 'border-black ring-1 ring-black'
@@ -57,7 +57,7 @@ const ExempleBisSelect = () => {
                         } w-full border border-solid rounded-lg bg-white py-2.5 pl-3 pr-10 text-left focus:outline-none`
                     }
                 >
-                    {open => (
+                    {({ open }) => (
                         <>
                             <span className='text-sm'>
                                 {selectedPerson.length > 0 ? (
@@ -132,7 +132,7 @@ const ExempleBisSelect = () => {
     );
 };
 
-const meta: Meta<typeof Select> = { component: Select };
+const meta: Meta<typeof Select> = { title: 'Select', component: Select };
 export default meta;
 
 type Story = StoryObj<typeof Select>;
