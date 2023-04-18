@@ -1,7 +1,7 @@
 {
-    "name": "ms-headless",
+    "name": "@maespirit/ms-headless",
     "version": "0.0.1",
-    "description": "Headless UI components library",
+    "description": "React headless UI components library",
     "main": "dist/cjs/index.js",
     "module": "dist/esm/index.js",
     "repository": "git@github.com:maespirit/ms-ui.git",
