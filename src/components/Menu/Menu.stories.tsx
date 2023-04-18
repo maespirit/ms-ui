@@ -55,7 +55,7 @@ const ExempleStyledMenu = () => {
                     <Menu.Item
                         onClick={() => console.log('huhu')}
                         className={({ active }) =>
-                            `appearance-none p-0 m-0 text-slate-700 flex items-center w-full h-10 px-4 items-center border-0 text-sm ${
+                            `appearance-none p-0 m-0 text-slate-700 flex items-center w-full h-10 px-4 border-0 text-sm ${
                                 active ? 'bg-slate-100' : 'bg-transparent'
                             }`
                         }
@@ -76,7 +76,7 @@ const ExempleStyledMenu = () => {
                     <Menu.Item
                         onClick={() => console.log('huhu')}
                         className={({ active }) =>
-                            `appearance-none p-0 m-0 text-slate-700 flex items-center w-full h-10 px-4 items-center border-0 text-sm ${
+                            `appearance-none p-0 m-0 text-slate-700 flex items-center w-full h-10 px-4 border-0 text-sm ${
                                 active ? 'bg-slate-100' : 'bg-transparent'
                             }`
                         }
@@ -100,7 +100,7 @@ const ExempleStyledMenu = () => {
                     <Menu.Item
                         onClick={() => console.log('huhu')}
                         className={({ active }) =>
-                            `appearance-none p-0 m-0 text-slate-700 flex items-center w-full h-10 px-4 items-center border-0 text-sm ${
+                            `appearance-none p-0 m-0 text-slate-700 flex items-center w-full h-10 px-4 border-0 text-sm ${
                                 active ? 'bg-slate-100' : 'bg-transparent'
                             }`
                         }

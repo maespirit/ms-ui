@@ -1,6 +1,6 @@
-export * from './components/Checkbox';
-export * from './components/Menu';
-export * from './components/Select';
+export { default as Checkbox } from './components/Checkbox';
+export { default as Menu } from './components/Menu';
+export { default as Selectbox } from './components/Select';
 
 export { useClickOutside } from './hooks/useClickOutside';
 export * from './hooks/useIsoMorphicEffect';
