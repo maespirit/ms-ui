@@ -6,10 +6,10 @@ React headless UI components library
 
 ```bash
 ## NPM
-npm install library-name
+npm install @maespirit/ms-headless
 
 ## YARN
-yarn add library-name
+yarn add @maespirit/ms-headless
 ```
 
 ## License
