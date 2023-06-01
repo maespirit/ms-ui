@@ -1,8 +1,5 @@
 module.exports = {
-    stories: [
-        '../src/**/*.stories.mdx',
-        '../src/**/*.stories.@(js|jsx|ts|tsx)'
-    ],
+    stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx)'],
     addons: [
         '@storybook/addon-links',
         '@storybook/addon-essentials',
@@ -16,8 +13,7 @@ module.exports = {
                 // For more details on this addon's options.
                 postCss: true
             }
-        },
-        '@storybook/addon-mdx-gfm'
+        }
     ],
     framework: {
         name: '@storybook/react-webpack5',

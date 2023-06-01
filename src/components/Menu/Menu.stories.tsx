@@ -133,5 +133,9 @@ export const Primary: Story = {
 };
 
 export const Exemple: Story = {
-    render: () => <ExempleStyledMenu />
+    render: () => (
+        <div className='h-[400px]'>
+            <ExempleStyledMenu />
+        </div>
+    )
 };
