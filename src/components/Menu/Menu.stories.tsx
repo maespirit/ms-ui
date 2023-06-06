@@ -134,7 +134,7 @@ export const Primary: Story = {
 
 export const Exemple: Story = {
     render: () => (
-        <div className='h-[400px]'>
+        <div className='h-[180px]'>
             <ExempleStyledMenu />
         </div>
     )
