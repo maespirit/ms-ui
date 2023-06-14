@@ -14,6 +14,26 @@ const mergeRefs = (...refs: any[]) => {
     };
 };
 
+// type ReactTag = keyof JSX.IntrinsicElements | JSXElementConstructor<any>;
+
+// interface RenderProps<TTag> {
+//     myProps: React.ComponentPropsWithRef<ElementType>;
+//     theirProps: React.ComponentPropsWithRef<ElementType>;
+//     tag: ElementType;
+//     states?: object;
+//     visible?: boolean;
+//     name: string;
+// }
+
+interface RenderProps {
+    myProps: React.PropsWithChildren<Record<string, any>>;
+    theirProps: React.PropsWithChildren<Record<string, any>>;
+    tag: ElementType;
+    states?: Record<string, any>;
+    visible?: boolean;
+    name: string;
+}
+
 const render = ({
     myProps,
     theirProps,
@@ -21,14 +41,7 @@ const render = ({
     states,
     visible = true,
     name
-}: {
-    myProps: React.PropsWithChildren<HTMLElement>;
-    theirProps: React.PropsWithChildren<HTMLElement>;
-    tag: ElementType;
-    states?: object;
-    visible?: boolean;
-    name: string;
-}) => {
+}: RenderProps) => {
     const props = { ...theirProps, ...myProps };
     const { children } = props;
 
@@ -36,11 +49,21 @@ const render = ({
         typeof children === 'function' ? children(states) : children
     ) as ReactElement | ReactElement[];
 
+    if (
+        'className' in props &&
+        props.className &&
+        typeof props.className === 'function'
+    ) {
+        props.className = props.className(states);
+    }
+
     console.log(name);
 
     if (visible) {
         return React.createElement(tag, props, resolvedChildren);
     }
+
+    return null;
 };
 
 export default render;
